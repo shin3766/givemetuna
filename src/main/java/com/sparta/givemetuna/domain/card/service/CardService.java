@@ -4,12 +4,15 @@ import com.sparta.givemetuna.domain.card.constant.CardPriority;
 import com.sparta.givemetuna.domain.card.dto.request.CreateCardRequestDto;
 import com.sparta.givemetuna.domain.card.dto.response.CreateCardResponseDto;
 import com.sparta.givemetuna.domain.card.dto.response.SelectCardResponseDto;
-import com.sparta.givemetuna.domain.card.dto.response.UpdateCardAccountResponseDto;
+import com.sparta.givemetuna.domain.card.dto.response.UpdateCardAllAssignResponseDto;
+import com.sparta.givemetuna.domain.card.dto.response.UpdateCardAssigneeResponseDto;
+import com.sparta.givemetuna.domain.card.dto.response.UpdateCardAssignorResponseDto;
 import com.sparta.givemetuna.domain.card.dto.response.UpdateCardPeriodResponseDto;
 import com.sparta.givemetuna.domain.card.dto.response.UpdateCardPriorityResponseDto;
 import com.sparta.givemetuna.domain.card.dto.response.UpdateCardStageResponseDto;
 import com.sparta.givemetuna.domain.card.dto.response.UpdateCardTitleResponseDto;
 import com.sparta.givemetuna.domain.card.entity.Card;
+import com.sparta.givemetuna.domain.card.exception.SelectCardNotFoundException;
 import com.sparta.givemetuna.domain.card.repository.CardRepository;
 import com.sparta.givemetuna.domain.checklist.service.ChecklistService;
 import com.sparta.givemetuna.domain.stage.entity.Stage;
@@ -26,13 +29,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class CardService {
 
     private final CardRepository cardRepository;
     private final ChecklistService checklistService;
 
-    @Transactional
+
     public CreateCardResponseDto createCard(Stage stage, User creator, User assignor,
             CreateCardRequestDto requestDto) {
 
@@ -57,7 +60,7 @@ public class CardService {
         return CreateCardResponseDto.of(saveCard, stage, assignor);
     }
 
-    @Transactional
+
     public UpdateCardStageResponseDto updateStage(Stage afterStage, Card card) {
 
         card.updateStage(afterStage);
@@ -65,7 +68,7 @@ public class CardService {
         return UpdateCardStageResponseDto.of(card);
     }
 
-    @Transactional
+
     public UpdateCardTitleResponseDto updateTitle(Card card, String title) {
 
         card.updateTitle(title);
@@ -73,15 +76,33 @@ public class CardService {
         return UpdateCardTitleResponseDto.of(card);
     }
 
-    @Transactional
-    public UpdateCardAccountResponseDto updateAccount(User assignor, Card card) {
 
-        card.updateAssignorAccount(assignor);
+    public UpdateCardAllAssignResponseDto updateAllAssign(Card card, User nextAssignor,
+            User assignee) {
 
-        return UpdateCardAccountResponseDto.of(card);
+        card.updateAssignor(nextAssignor);
+        checklistService.firstCreateChecklist(card, assignee);
+
+        return UpdateCardAllAssignResponseDto.of(card);
     }
 
-    @Transactional
+
+    public UpdateCardAssignorResponseDto updateAssignor(Card card, User assignor) {
+
+        card.updateAssignor(assignor);
+
+        return UpdateCardAssignorResponseDto.of(card);
+    }
+
+
+    public UpdateCardAssigneeResponseDto updateAssignee(Card card, User assignee) {
+
+        checklistService.firstCreateChecklist(card, assignee);
+
+        return UpdateCardAssigneeResponseDto.of(assignee);
+    }
+
+
     public UpdateCardPriorityResponseDto updatePriority(Card card, CardPriority cardPriority) {
 
         card.updatePriority(cardPriority);
@@ -89,7 +110,7 @@ public class CardService {
         return UpdateCardPriorityResponseDto.of(card);
     }
 
-    @Transactional
+
     public UpdateCardPeriodResponseDto updatePeriod(Card card, Timestamp startedAt,
             Timestamp closedAt) {
 
@@ -98,6 +119,7 @@ public class CardService {
         return UpdateCardPeriodResponseDto.of(card);
     }
 
+    @Transactional(readOnly = true)
     public Page<SelectCardResponseDto> getCardPage(Stage stage, Pageable pageable) {
 
         Page<Card> allCardByStageId = cardRepository.findAllByStageId(stage.getId(), pageable);
@@ -108,26 +130,28 @@ public class CardService {
             responseDtoList.add(responseDto);
         }
 
-        return new PageImpl<> (responseDtoList, pageable, allCardByStageId.getTotalElements());
+        return new PageImpl<>(responseDtoList, pageable, allCardByStageId.getTotalElements());
     }
 
-    @Transactional
+
     public void delete(Card card) {
         cardRepository.delete(card);
     }
 
-    private Card checkCard(Long cardId) {
+    @Transactional(readOnly = true)
+    public Card checkCard(Long cardId) {
 
         return cardRepository.findById(cardId)
-                .orElseThrow(() -> new NullPointerException("없는 카드입니다."));
+                .orElseThrow(SelectCardNotFoundException::new);
     }
 
-    public Card checkStageCard(Long stageId, Long cardId) {
+    @Transactional(readOnly = true)
+    public Card checkStageCard(Stage stage, Long cardId) {
 
         Card card = checkCard(cardId);
 
-        if (!card.getStage().getId().equals(stageId)) {
-            throw new IllegalArgumentException("해당 카드는 다른 스테이지에 있습니다.");
+        if (!card.getStage().getId().equals(stage.getId())) {
+            throw new SelectCardNotFoundException(card.getTitle(), stage.getCategory());
         }
         return card;
     }

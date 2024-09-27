@@ -11,6 +11,8 @@ import com.sparta.givemetuna.domain.checklist.dto.ChecklistPriorityUpdateRequest
 import com.sparta.givemetuna.domain.checklist.dto.ChecklistPriorityUpdateResponseDto;
 import com.sparta.givemetuna.domain.checklist.service.ChecklistService;
 import com.sparta.givemetuna.domain.security.UserDetailsImpl;
+import com.sparta.givemetuna.global.validator.BoardUserRoleValidator;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,16 +34,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/boards/{board_id}/stages/{stage_id}/cards/{card_id}/checklists")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "Bearer Authentication")
 public class ChecklistController {
 
 	private final ChecklistService checklistService;
 
-	// Valid 작성
+	private BoardUserRoleValidator boardUserRoleValidator;
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	public ResponseEntity<CommonResponseDTO> handleValidationException(MethodArgumentNotValidException ex) {
 		BindingResult result = ex.getBindingResult();
 		FieldError fieldError = result.getFieldError();
+		assert fieldError != null;
 		String errorMessage = fieldError.getDefaultMessage();
 
 		CommonResponseDTO responseDto = new CommonResponseDTO(errorMessage, HttpStatus.BAD_REQUEST.value());

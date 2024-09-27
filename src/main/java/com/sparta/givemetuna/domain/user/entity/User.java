@@ -35,7 +35,7 @@ public class User {
 	@JsonIgnore
 	private final List<Issue> issues = new ArrayList<>();
 
-	@OneToMany(mappedBy = "assignee", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private final List<Checklist> checklists = new ArrayList<>();
 
@@ -47,7 +47,7 @@ public class User {
 	@JsonIgnore
 	private final List<Card> cardsAssignedTo = new ArrayList<>();
 
-	@OneToMany(mappedBy = "user")
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	private final List<BoardUserRole> boardUserRoles = new ArrayList<>();
 
@@ -75,6 +75,8 @@ public class User {
 	@Column
 	private String description;
 
+	private Long kakaoId;
+
 	public User(String account, String password, String email, String nickname, String github, String description) {
 		this.account = account;
 		this.password = password;
@@ -84,33 +86,45 @@ public class User {
 		this.description = description;
 	}
 
-    public void updateEmail(UserInfoRequestDTO userInfoRequestDTO) {
-		if(userInfoRequestDTO.getEmail() !=null) {
+	public User(String account, String password, String email, Long kakaoId) {
+		this.account = account;
+		this.password = password;
+		this.email = email;
+		this.kakaoId =kakaoId;
+	}
+
+	public void updateEmail(UserInfoRequestDTO userInfoRequestDTO) {
+		if (userInfoRequestDTO.getEmail() != null) {
 			this.email = userInfoRequestDTO.getEmail();
 		}
-    }
+	}
 
 	public void updateNickname(UserInfoRequestDTO userInfoRequestDTO) {
-		if(userInfoRequestDTO.getNickname() !=null) {
+		if (userInfoRequestDTO.getNickname() != null) {
 			this.nickname = userInfoRequestDTO.getNickname();
 		}
 	}
 
 	public void updateGithub(UserInfoRequestDTO userInfoRequestDTO) {
-		if(userInfoRequestDTO.getGithub() !=null) {
+		if (userInfoRequestDTO.getGithub() != null) {
 			this.github = userInfoRequestDTO.getGithub();
 		}
 	}
 
 	public void updatedescription(UserInfoRequestDTO userInfoRequestDTO) {
-		if(userInfoRequestDTO.getDescription() !=null) {
+		if (userInfoRequestDTO.getDescription() != null) {
 			this.description = userInfoRequestDTO.getDescription();
 		}
 	}
 
 	public void updatePassword(String password) {
-		if(password !=null) {
+		if (password != null) {
 			this.password = password;
 		}
 	}
+
+    public User kakaoIdUpdate(Long kakaoId) {
+		this.kakaoId = kakaoId;
+		return this;
+    }
 }

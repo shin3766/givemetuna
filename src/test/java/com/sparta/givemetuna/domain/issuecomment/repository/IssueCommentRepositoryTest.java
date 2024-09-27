@@ -2,9 +2,9 @@ package com.sparta.givemetuna.domain.issuecomment.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.sparta.givemetuna.domain.card.constant.CardPriority;
 import com.sparta.givemetuna.domain.card.entity.Card;
 import com.sparta.givemetuna.domain.card.repository.CardRepository;
-import com.sparta.givemetuna.domain.configuration.QueryDslConfig;
 import com.sparta.givemetuna.domain.issue.entity.Issue;
 import com.sparta.givemetuna.domain.issue.entity.IssueStatus;
 import com.sparta.givemetuna.domain.issue.repository.IssueRepository;
@@ -12,6 +12,7 @@ import com.sparta.givemetuna.domain.issuecomment.entity.IssueComment;
 import com.sparta.givemetuna.domain.user.entity.User;
 import com.sparta.givemetuna.domain.user.repository.UserRepository;
 import com.sparta.givemetuna.global.config.JpaAuditingConfig;
+import com.sparta.givemetuna.global.config.QueryDslConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class IssueCommentRepositoryTest {
 	@BeforeEach
 	void setUp() {
 		savedUser = userRepository.save(User.builder().build());
-		Card card = cardRepository.save(Card.builder().build());
+		Card card = cardRepository.save(Card.builder().title("요청업무#1").cardPriority(CardPriority.HIGH).build());
 		Issue issue = Issue.builder()
 			.user(savedUser)
 			.card(card)
